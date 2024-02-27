@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Happy Birthday Vin</title>
+    <link rel="stylesheet" href="style.css" />
+    
+  </head>
+  <body>
+    <audio id="microphone" style="display: none"></audio>
+    <audio id="happyBirthdayAudio">
+      <source src="sound/happybirthday.mp3" type="audio/mp3" />
+    </audio>
+
+    <div class="birthday-text">
+      <h1><b>happy 20th birthday</b></h1>
+      <div class="row wish"><p>Make a wish and blow the candle!</p></div>
+    </div>
+    <!-- Initially hidden pyro -->
+    <div class="pyro" style="display: none">
+      <div class="before"></div>
+      <div class="after"></div>
+    </div>
+    <div class="cake-container">
+      <div class="cake">
+        <div class="plate"></div>
+        <div class="layer layer-bottom"></div>
+        <div class="layer layer-middle"></div>
+        <div class="layer layer-top"></div>
+        <div class="icing"></div>
+        <div class="drip drip1"></div>
+        <div class="drip drip2"></div>
+        <div class="drip drip3"></div>
+        <div class="candle">
+          <div class="flame"></div>
+        </div>
+      </div>
+    </div>
+    <br>
+    <!-- note -->
+    <div class="note" style="margin-bottom: 3em; margin-top: 5em;">
+      <a href="https://happybirthdayvina.vercel.app/"><button class="button" style="vertical-align: middle;"><span>Next</span></button></a>
+    </div>
+    
+    
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // "flame" class directly on the candle's flame
+        const flameContainer = document.querySelector(".flame");
+
+        // grab the pyro element
+        const pyroElement = document.querySelector(".pyro");
+
+        let isBlowing = false;
+        let currentFlame = 0;
+
+        function setupMicrophone() {
+          return navigator.mediaDevices
+            .getUserMedia({ audio: true })
+            .then(function (stream) {
+              const audioContext = new AudioContext();
+              const analyser = audioContext.createAnalyser();
+              const microphone = audioContext.createMediaStreamSource(stream);
+              microphone.connect(analyser);
+
+              analyser.fftSize = 256;
+              const bufferLength = analyser.frequencyBinCount;
+              const dataArray = new Uint8Array(bufferLength);
+
+              function checkBlow() {
+                analyser.getByteFrequencyData(dataArray);
+                const average = getAverageVolume(dataArray);
+
+                if (average > 100) {
+                  if (!isBlowing) {
+                    isBlowing = true;
+                    simulateBlow();
+                  }
+                } else {
+                  isBlowing = false;
+                }
+                requestAnimationFrame(checkBlow);
+              }
+              checkBlow();
+            })
+            .catch(function (err) {
+              console.error("Error accessing microphone:", err);
+            });
+        }
+
+        function playHappyBirthday() {
+          const happyBirthdayAudio =
+            document.getElementById("happyBirthdayAudio");
+          if (happyBirthdayAudio) {
+            happyBirthdayAudio.play();
+          }
+        }
+
+        function getAverageVolume(array) {
+          let sum = 0;
+          for (let i = 0; i < array.length; i++) {
+            sum += array[i];
+          }
+          return sum / array.length;
+        }
+
+        function simulateBlow() {
+          // Remove the "flame" class at the beginning
+          flameContainer.classList.remove("flame");
+
+          const flames = [
+            "flame2",
+            "flame3",
+            "flame2",
+            "flame3",
+            "flame4",
+            "flame5",
+          ];
+
+          if (currentFlame < flames.length) {
+            flameContainer.classList.add(flames[currentFlame]);
+
+            if (currentFlame === flames.length - 1) {
+              playHappyBirthday();
+            }
+
+            if (currentFlame < flames.length - 1) {
+              setTimeout(() => {
+                flameContainer.classList.remove(flames[currentFlame]);
+                currentFlame++;
+                simulateBlow();
+              }, 40); // Adjust the time delay between flames
+            } else {
+              // Show pyro when flame5 is reached
+              pyroElement.style.display = "block";
+              isBlowing = false;
+            }
+          }
+        }
+        setupMicrophone();
+      });
+    </script>
+  </body>
+</html>
